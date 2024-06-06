@@ -1,0 +1,259 @@
+---
+title: "IE360 Project"
+author: "Group 10"
+date: "2024-06-04"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+### Problem Description
+
+
+This project explores ways to predict how much electricity Edikli GES, a solar power plant in Turkey, will produce each hour of the next day. To achieve this, we'll use two datasets:
+
+-Historical data on how much electricity the plant has produced in the past.
+-Weather data for the area around the plant, including factors that affect solar power generation like sunshine, clouds, and temperature.
+
+We will need to combine this information to build a model that can predict the plant's electricity output.The forecast runs from May 13th to 26th, 2024, with we submited our predictions each day by noon. The best predictions will be compared to a simple model that just uses the plant's production from the same hour on the previous day.
+
+### Descriptive Analysis of the Given Data
+
+This project delves into predicting hourly solar power output for a specific plant - Edikli GES - located in Turkey. To achieve this, we'll work with two datasets. The first dataset chronicles the plant's historical electricity production, providing valuable insights into past generation trends. The second dataset focuses on weather data, offering a comprehensive picture of the environmental conditions surrounding the plant across 25 grid points. This weather data dives deep into factors known to affect solar power generation, including the amount of sunshine reaching the panels (DSWRF_surface), the presence and type of clouds (TCDC variables), and even temperature readings (TMP_surface). By analyzing these elements, alongside additional solar radiation metrics (USWRF) and a snow indicator (CSNOW_surface), we can build models that predict the plant's electricity output for the following day. 
+
+## Related  Literature
+
+Energy production forecasting has been extensively studied in the literature due to its critical importance in energy management and planning. Numerous research studies have explored various techniques and methodologies for forecasting energy production from renewable sources such as solar and wind. Here, we provide a brief summary of relevant literature in this field:
+
+###Time Series Forecasting Techniques:
+
+Many studies have employed time series forecasting methods, including autoregressive integrated moving average (ARIMA), seasonal decomposition, and exponential smoothing models, to predict energy production from renewable sources. These models capture temporal patterns and seasonality in energy generation data.
+
+### Machine Learning Approaches: 
+Machine learning algorithms, such as support vector machines (SVM), random forests, and artificial neural networks (ANN), have been widely used for energy production forecasting. These methods offer flexibility in modeling complex relationships between weather variables and energy generation, allowing for non-linear and dynamic forecasting models.
+
+### Hybrid Forecasting Models: 
+Hybrid models that combine multiple forecasting techniques have shown promise in improving prediction accuracy. For example, hybrid ARIMA-ANN models integrate the strengths of both time series analysis and neural networks to capture both short-term fluctuations and long-term trends in energy production data.
+
+## APPROACH
+
+Our approach to forecasting energy production involves several key steps:
+
+Data Preprocessing: 
+
+We start by preprocessing the available data, which includes merging weather and production datasets, handling missing values, and organizing the data into a suitable format for analysis.
+
+Exploratory Data Analysis (EDA): 
+
+Before building the forecasting models, we conduct exploratory data analysis to gain insights into the underlying patterns and relationships in the data. This involves visualizing temporal trends, correlations between variables, and identifying any outliers or anomalies.
+
+Feature Engineering: 
+
+Feature engineering plays a crucial role in capturing relevant information from the input variables. We select and transform weather variables, such as solar radiation, cloud cover, and temperature, to create informative features for predicting energy production.
+
+Forecasting: 
+
+Once the models are trained and evaluated, we use them to generate forecasts of energy production for future time periods. We assess the accuracy of the forecasts and provide confidence intervals to quantify forecast uncertainty.
+
+### Data Manipulation 
+
+
+This code dives into the world of solar power forecasting!  First, it equips itself with the necessary R libraries for data manipulation (like data.table and tidyr), time series analysis (forecast), and handling dates and times (lubridate).  Next, it sets the current date specifically for the Turkish timezone.
+
+The code focuses on creating a comprehensive date and time template. It extracts all the unique combinations of "date" and "hour" from the weather data and stores them in a new data frame called template_dt. Think of this template as a calendar that captures every single date and hour combination present in the weather data.
+
+Finally, the code merges the template_dt with the production_data based on matching dates and hours. Here, an important setting is all.x=TRUE, which ensures that all the dates and hours from the weather data are included, even if there's no corresponding power production data for that specific time. This might result in some missing values for production, but it ensures a complete picture of potential production based on the available weather information. By merging these datasets, the code prepares a powerful combined table that incorporates both historical weather conditions and past production levels. This combined data can be a valuable asset for further analysis and potentially building models to predict future solar power generation at the Edikli GES plant.
+
+
+```{r include=FALSE}
+# Load Library
+require(forecast)
+require(data.table)
+require(lubridate)
+library(reshape2)
+library(tidyr)
+library(data.table)
+
+tday=today("Turkey")
+# Dosya yolu ve adı
+
+file_path1 <- "C:/Users/Lenovo/OneDrive/Masaüstü/weather_info.csv"
+file_path2 <- "C:/Users/Lenovo/OneDrive/Masaüstü/production.csv"
+
+# Load CVSe
+weather_data <- read.csv(file_path1)
+View(weather_data)
+production_data  <- read.csv(file_path2)
+View(production_data)
+
+# Getting full weather date and hours as a template
+template_dt <- unique(weather_data[, c("date", "hour")])
+View(template_dt)
+
+template_dt = merge(template_dt,production_data,by=c('date','hour'),all.x=T)
+View(template_dt)
+
+```
+
+### Logic of The Code
+
+
+
+The code starts by incrementing a given date (tday) by one day and storing the result as tday_plus_1. It then filters a dataset (template_dt) to retain only the rows where the date is less than or equal to tday. Next, the code installs and loads the reshape2 package, which is used for reshaping data. Using this package, it transforms a weather dataset (weather_data) from a wide format to a long format, making it easier to handle and analyze. After reshaping the data, the code calculates the average values for each hour and date by aggregating the reshaped weather data. The final step involves merging the filtered template dataset with the aggregated weather data based on the date and hour columns. This ensures that all rows from the filtered template data are included in the merged dataset, even if there are no matching rows in the weather data, thus providing a comprehensive dataset that includes both the original template data and the corresponding weather information.
+
+The other part merges the filtered template data (template_dt) with the hourly region averages (hourly_region_averages), orders the merged data by date and hour, and then inspects the results. It further filters the merged data to separate the available data (without missing values) and the data that needs to be forecasted (with missing values in the production column), displaying each for further analysis.
+
+```{r include=FALSE}
+# Incrementing "tday" by one day
+tday_plus_1 <- tday + days(1)
+tday_plus_1
+
+# Filtering "template_dt" based on "tday_plus_1"
+template_dt <- template_dt[template_dt$date <= tday, ]
+
+# Installing and loading the "reshape2" package
+install.packages("reshape2")
+library(reshape2)
+
+# Melting "weather_data" to a long Format
+long_weather <- melt(weather_data, id.vars = c(1:4))
+View(long_weather)
+
+# Calculating hourly region averages
+hourly_region_averages = dcast(long_weather, date+hour~variable,fun.aggregate=mean)
+View(hourly_region_averages )
+
+# Merging "template_dt" with hourly weather data
+template_dt_with_weather = merge(template_dt,hourly_region_averages,by=c('date','hour'),all.x=T)
+View(template_dt_with_weather)
+
+# Merging data frames
+template_dt_with_weather <- merge(template_dt, hourly_region_averages, by = c('date', 'hour'), all.x = TRUE)
+
+# Ordering the merged data frame
+template_dt_with_weather <- template_dt_with_weather[order(template_dt_with_weather$date, template_dt_with_weather$hour), ]
+View(template_dt_with_weather)
+
+# Filtering non-missing data
+available_data <- na.omit(template_dt_with_weather)
+View(available_data)
+
+
+# Identifying data to be forecasted
+to_be_forecasted <- template_dt_with_weather[is.na(template_dt_with_weather$production), ]
+View(to_be_forecasted)
+
+```
+
+
+The part of the code conducts linear regression-based forecasting for the production values for the next day. It first fits a linear regression model (lr_model) using available data (available_data), then generates predictions (forecasted) for the production values of the next day (to_be_forecasted). Negative predictions are handled by setting them to 0, and the data format is converted to a data.table. The forecasted values are organized into a new data table (forecast_table) containing corresponding dates and hours. The code then identifies tomorrow's date using the lubridate package and extracts hourly forecasts for the next day (day_ahead_forecast). Finally, it prints and displays the hourly forecast for tomorrow.
+
+
+```{r}
+# Linear Regression Modeling
+do_not_use <- c('date', 'hour')
+lr_model <- lm(production ~ ., data = available_data[, !names(available_data) %in% do_not_use])
+lr_model
+
+# Prediction
+forecasted <- predict(lr_model, newdata = to_be_forecasted)
+View(forecasted)
+
+# Handling negative predictions and data format conversion
+forecasted[forecasted<0] = 0
+library(data.table)
+to_be_forecasted <- as.data.table(to_be_forecasted)
+
+# Creating Forecast Table and Adding Forecasted Values
+forecast_table <- to_be_forecasted[, .(date, hour)]
+forecast_table[, lr_forecast := forecasted]
+
+# Determining Tomorrow's Date
+library(lubridate)
+tomorrow <- tday + days(1)
+
+# Obtaining hourly forecasts for tomorrow and displaying results
+day_ahead_forecast <- forecast_table[date == tday]
+print(day_ahead_forecast)
+```
+
+
+This part of code first merges weather and production data based on the date and hour columns, ensuring all data points are retained using the all = TRUE parameter. It then converts the merged data frame to the data.table format for efficient manipulation and sorts it chronologically. The date column is converted to date objects, and the dataset is split into training and testing sets based on a specified date cutoff. The date column is transformed into a factor variable. A linear regression model (model) is then trained using the training data, excluding the date column. Finally, the model is used to predict production values for the test dataset, and the results are stored in the predicted variable for further analysis.
+
+```{r}
+# Merging data and converting to Data.Table format and sorting
+merged_data <- merge(weather_data, production_data, by = c('date', 'hour'), all = TRUE)
+View(merged_data)
+merged_data <- as.data.table(merged_data)
+merged_data <- merged_data[order(date, hour)]
+
+#  Converting date column and filtering training data and test data
+merged_data$date <- ymd(merged_data$date)
+train_data <- merged_data[date(merged_data$date) < ymd("2022-07-01")]
+test_data <- merged_data[date(merged_data$date) >= ymd("2022-07-01")]
+
+# Treating date column as factor
+merged_data$date <- as.factor(merged_data$date)
+
+# Training Model and prediction
+model <- lm(production ~ ., data = train_data)
+model
+predicted <- predict(model, newdata = test_data)
+View(predicted)
+```
+
+
+The provided code calculates the errors between the actual production values from the test dataset (test_data$production) and the predicted values (predicted) obtained from the trained linear regression model. It first computes the errors by subtracting the predicted values from the actual values, then calculates the mean squared error (MSE) and the root mean squared error (RMSE) to evaluate the model's performance. Finally, it displays the MSE and RMSE values, providing a quantitative measure of the model's accuracy in predicting production values.
+
+```{r}
+# Computing Errors and sumamrizing 
+errors <- test_data$production - predicted
+head(errors)
+
+summary(errors)
+errors <- errors[!is.na(errors)]
+
+# Calculating Mean Squared Error (MSE)
+mse <- mean(errors^2)
+mse
+
+# Calculating Root Mean Squared Error (RMSE)
+rmse <- sqrt(mse)
+rmse
+
+# Displaying Errors
+cat("Ortalama Kare Hata (MSE):", mse, "\n")
+cat("Kök Ortalama Kare Hata (RMSE):", rmse, "\n")
+
+```
+
+## Summary
+
+The provided code aims to forecast hourly solar power production for Edikli GES using weather data and production records. Initially, it loads the necessary libraries and data files containing weather and production information. The weather data is reshaped and merged with the production data, resulting in a dataset where each hour's weather variables are associated with production values.
+
+Subsequently, a linear regression model is trained using available data and used to predict production values for the next day. The predicted values are then organized into a forecast table. The code also calculates the mean squared error (MSE) and root mean squared error (RMSE) to evaluate the performance of the model.
+
+Finally, the errors are analyzed, and their statistics are printed, providing insights into the accuracy of the predictions made by the model. This code essentially implements a data-driven approach to forecast solar power production based on weather variables, and evaluates the performance of the forecast using error metrics.
+
+## Conclusions and Future Work
+
+Moving forward, future research could focus on several avenues for improvement and extension:
+
+Model Enhancement: 
+
+Further refinement of the forecasting models by incorporating additional features, optimizing model parameters, and exploring alternative algorithms could improve the accuracy and robustness of the forecasts.
+
+Real-Time Forecasting:
+
+Developing real-time forecasting capabilities that can adapt to changing conditions and incoming data streams is essential for dynamic energy management and decision-making. Future work could focus on developing scalable and efficient algorithms for real-time forecasting applications.
+
+## Code
+
+All of the scripts is available at our git [repository](https://github.com/BU-IE-360/spring24-MehmetEnesKandemir-boun/) which is publicly available. In order to reach our main script please click [here](https://bu-ie-360.github.io/spring24-MehmetEnesKandemir-boun/IE360-Project-R.Script.R).
+
+
