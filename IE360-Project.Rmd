@@ -3,8 +3,8 @@ title: "IE360 Project"
 author: "Group 10"
 date: "2024-06-04"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -238,7 +238,7 @@ The provided code aims to forecast hourly solar power production for Edikli GES 
 
 Subsequently, a linear regression model is trained using available data and used to predict production values for the next day. The predicted values are then organized into a forecast table. The code also calculates the mean squared error (MSE) and root mean squared error (RMSE) to evaluate the performance of the model.
 
-Finally, the errors are analyzed, and their statistics are printed, providing insights into the accuracy of the predictions made by the model. This code essentially implements a data-driven approach to forecast solar power production based on weather variables, and evaluates the performance of the forecast using error metrics.
+Finally, the errors are analyzed, and their statistics are printed, providing insights into the accuracy of the predictions made by the model. This code essentially implements a data-driven approach to forecast solar power production based on weather variables and evaluates the performance of the forecast using error metrics.
 
 ## Conclusions and Future Work
 
@@ -254,6 +254,6 @@ Developing real-time forecasting capabilities that can adapt to changing conditi
 
 ## Code
 
-All of the scripts is available at our git [repository](https://github.com/BU-IE-360/spring24-MehmetEnesKandemir-boun/) which is publicly available. In order to reach our main script please click [here](https://bu-ie-360.github.io/spring24-MehmetEnesKandemir-boun/IE360-Project-R.Script.R).
+All of the scripts is available at our git [repository](https://github.com/BU-IE-360/spring24-MehmetEnesKandemir-boun/) and [page](https://bu-ie-360.github.io/spring24-MehmetEnesKandemir-boun/) which is publicly available. In order to reach our main script please click [here](https://bu-ie-360.github.io/spring24-MehmetEnesKandemir-boun/IE360-Project-R.Script.R).
 
 
